@@ -1,0 +1,9 @@
+#please only commit build-dependant files
+#ignore bin files
+bin/
+#ignore backup files
+~*
+*.bak
+.DS_Store
+.DS_Store?
+
