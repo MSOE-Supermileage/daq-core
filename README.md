@@ -10,8 +10,8 @@
 ### How do I get set up? ###
 
 * Setup
-	* The projects are of IntellJ origin. You may want to install that if you'd like to use [IntelliJ](http://www.jetbrains.com/idea/) for development or you don't want to hassle with project files.
-	* You will need JDK 7. Feel free to use Oracle JDK or OpenJDK - just so long as it's 7.
+	* The projects are of [IntellJ](http://www.jetbrains.com/idea/) origin. You can use another IDE or text editor if you so choose, so long as you do not commit other non-intellij project files or temporary backup files. Feel free to add them to the .gitignore
+	* You will need JDK 7. Feel free to use Oracle JDK or OpenJDK. Android does not support Java 8 as of Oct 12, 2014.
 	* For the android project (Raspberry Pi Data Hub), you'll need the Android SDK. I don't know what packages you'll need yet, but Android SDK is definitely necessary. :-)
 
 * Configuration
