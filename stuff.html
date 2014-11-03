@@ -1,4 +1,15 @@
 <html>
-   <link rel="stylesheet" href="css.css"/>
-   <label><b>Hello</b> there<br>man</label>
+	<link rel="stylesheet" href="css.css"/>
+	<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+	<label><b>Hello</b> there<br>man</label>
+	<script>
+	var data;
+		$.ajax({
+			type:"post",
+			url:"http://localhost:8000/ajax",
+			data:"{"+"'name':'blake'"+"}",
+			success:function(d){alert(d);data=d;},
+			datatype:"json"
+		})
+	</script>
 </html> 
