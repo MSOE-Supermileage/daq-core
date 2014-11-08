@@ -3,6 +3,10 @@
  */
 import com.sun.net.httpserver.*;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
@@ -10,6 +14,9 @@ import java.util.Scanner;
 public class MyHTTPServer {
     //our base server
     static HttpServer server=null;
+
+    //for proper transferring of embedded files/styles/scripts
+    static FileNameMap fileNameMap = URLConnection.getFileNameMap();
 
     //main thread
     public static void main(String[] args){
@@ -31,7 +38,7 @@ public class MyHTTPServer {
         //  -- "/ajax" is the case for AJAX data requests
         server.createContext("/", new RequestHandler());
         server.createContext("/ajax", new AjaxRequestHandler());
-
+        MyTray.startNewTray();
         //I have no idea what this does
         server.setExecutor(null);
 
@@ -63,6 +70,13 @@ public class MyHTTPServer {
             //done reading
 
             System.out.println("done reading");
+
+            // Get mime type from the ones defined in [jre_home]/lib/content-types.properties
+            String mimeType = fileNameMap.getContentTypeFor((new File(path)).toURI().toURL().toString());
+
+            if (mimeType == null) {
+                mimeType = "application/octet-stream";
+            }
 
             //let the browser know there's something coming down the pipe
             e.sendResponseHeaders(200,response.length());
@@ -132,6 +146,74 @@ public class MyHTTPServer {
 
             //IMPORTANT: close the socket
             out.close();
+        }
+    }
+    static class MyTray{
+        static TrayIcon trayIcon =null;
+        public static void startNewTray(){
+            //Check the SystemTray is supported
+            if (!SystemTray.isSupported()) {
+                System.out.println("SystemTray is not supported");
+                return;
+            }
+            final PopupMenu popup = new PopupMenu();
+            Image bimg=null;
+            try {
+                URL url = new URL("http://files.softicons.com/download/web-icons/flat-style-icons-by-flaticonmaker/png/16x16/vip.png");
+                bimg = ImageIO.read(url);
+
+            }catch(Exception e){
+                System.out.println(e.toString());
+                return;
+            }
+            trayIcon =new TrayIcon(bimg);
+            trayIcon.setToolTip("PitView v1.0");
+            trayIcon.setImageAutoSize(true);
+            final SystemTray tray = SystemTray.getSystemTray();
+
+            // Create a pop-up menu components
+            MenuItem nameItem = new MenuItem("PitView v1.0");
+            MenuItem startItem = new MenuItem("Start");
+            startItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("Starting Server...");
+                    startServer(8000);
+                }
+            });
+            MenuItem stopItem = new MenuItem("Stop");
+            stopItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("Stopping Server...");
+                    server.stop(0);
+                    server=null;
+                }
+            });
+            MenuItem exitItem = new MenuItem("Exit");
+            exitItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("Exiting Server...");
+                    server.stop(0);
+                    System.exit(0);
+                }
+            });
+
+            //Add components to pop-up menu
+            popup.add(nameItem);
+            popup.addSeparator();
+            popup.add(startItem);
+            popup.add(stopItem);
+            popup.add(exitItem);
+
+            trayIcon.setPopupMenu(popup);
+
+            try {
+                tray.add(trayIcon);
+            } catch (AWTException e) {
+                System.out.println("TrayIcon could not be added.");
+            }
         }
     }
 }
