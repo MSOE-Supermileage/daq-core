@@ -12,6 +12,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class MyHTTPServer {
@@ -92,23 +93,42 @@ public class MyHTTPServer {
             out.close();
         }
     }
+    static ArrayList<String> datacollection=null;
+    static Thread datathread=null;
+    static Socket mysock=null;
+    public static void startDataCollection(String address, int port){
+        try {
+            mysock = new Socket(address, port);
+            datacollection=new ArrayList<String>();
+            datathread=new Thread(new Runnable(){
+                BufferedReader reader = new BufferedReader(new InputStreamReader(mysock.getInputStream()));
+
+                public void run(){
+                    while(true) {
+                        try {
+                            datacollection.add(reader.readLine());
+                        }catch(Exception e){
+                            System.out.println(e.toString());
+                        }
+                    }
+                }
+            });
+            datathread.start();
+        }catch(Exception e){
+            System.out.println(e.toString());
+        }
+    }
 
     //gets the data from the phone and returns it
-    public static String getData(String address, int port) {
+    public static String getData() {
         try {
-            //establish a socket connection to the phone
-            Socket sock = new Socket(address, port);
+            if(datacollection!=null) {
 
-            //read the data the phone sends upon connecting
-            BufferedReader reader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-
-            //close socket
-            sock.close();
-
-            //return the data
-            return reader.readLine();
+                //return the data
+                return datacollection.get(datacollection.size() - 1);
+            }
         } catch (Exception e) {
-
+            System.out.println(e.toString());
         }
         return null;
     }
@@ -140,8 +160,8 @@ public class MyHTTPServer {
             //establish the response stream
             OutputStream out = e.getResponseBody();
             //dummy response for now
-            String response = "testing 123 testing 123...";
-
+            String response = getData();//"testing 123 testing 123...";
+            System.out.println(response);
             //let the browser know there's something coming down the pipe
             e.sendResponseHeaders(200, response.length());
 
@@ -205,6 +225,14 @@ public class MyHTTPServer {
                     server = null;
                 }
             });
+            MenuItem startDataItem = new MenuItem("Connect to phone");
+            startDataItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("Starting Data Server...");
+                    startDataCollection("155.92.70.116",1112);
+                }
+            });
             MenuItem exitItem = new MenuItem("Exit");
             exitItem.addActionListener(new ActionListener() {
                 @Override
@@ -220,6 +248,9 @@ public class MyHTTPServer {
             popup.addSeparator();
             popup.add(startItem);
             popup.add(stopItem);
+            popup.addSeparator();
+            popup.add(startDataItem);
+            popup.addSeparator();
             popup.add(exitItem);
 
             trayIcon.setPopupMenu(popup);
