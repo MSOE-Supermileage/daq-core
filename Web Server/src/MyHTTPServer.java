@@ -5,6 +5,7 @@
 import com.sun.net.httpserver.*;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,7 +38,6 @@ public class MyHTTPServer {
             System.out.println(e.toString());
             return;
         }
-
         //establish what handlers do what:
         //  -- "/" is the generic case for web page delivery
         //  -- "/ajax" is the case for AJAX data requests
@@ -49,6 +49,7 @@ public class MyHTTPServer {
 
         //start the server
         server.start();
+        System.out.println("home dir: "+System.getProperty("user.dir"));
     }
 
     //Handler for http page requests
@@ -93,24 +94,45 @@ public class MyHTTPServer {
             out.close();
         }
     }
+    static boolean dataThreadIsRunning=false;
     static ArrayList<String> datacollection=null;
     static Thread datathread=null;
     static Socket mysock=null;
+    public static void stopDataCollection(){
+        try {
+            dataThreadIsRunning=false;
+            mysock.close();
+            datacollection=null;
+            mysock=null;
+            datathread=null;
+        }catch(Exception e){
+            System.out.println(e.toString());
+        }
+
+    }
     public static void startDataCollection(String address, int port){
         try {
+            System.out.println("Connecting to phone at "+address+":"+port);
             mysock = new Socket(address, port);
             datacollection=new ArrayList<String>();
+            dataThreadIsRunning=true;
             datathread=new Thread(new Runnable(){
                 BufferedReader reader = new BufferedReader(new InputStreamReader(mysock.getInputStream()));
 
                 public void run(){
-                    while(true) {
+                    while(dataThreadIsRunning) {
                         try {
-                            datacollection.add(reader.readLine());
+                            String data=reader.readLine();
+                            System.out.println("received-data: "+data);
+                            datacollection.add(data);
+                            if (data.contains("Exception")||data.contains("null"))
+                                dataThreadIsRunning=false;
                         }catch(Exception e){
+                            dataThreadIsRunning=false;
                             System.out.println(e.toString());
                         }
                     }
+                    System.out.println("Phone disconnected");
                 }
             });
             datathread.start();
@@ -200,7 +222,7 @@ public class MyHTTPServer {
 
             //create the tray icon application
             trayIcon = new TrayIcon(bimg);
-            trayIcon.setToolTip("PitView v1.0");
+            trayIcon.setToolTip("PitView v1.1");
             trayIcon.setImageAutoSize(true);
 
             //create the system tray controller
@@ -230,7 +252,15 @@ public class MyHTTPServer {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     System.out.println("Starting Data Server...");
-                    startDataCollection("155.92.70.116",1112);
+                    startDataCollection(JOptionPane.showInputDialog("Please enter IP: "),1112);
+                }
+            });
+            MenuItem stopDataItem = new MenuItem("Disconnect from phone");
+            stopDataItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("Stopping Data Server...");
+                    stopDataCollection();
                 }
             });
             MenuItem exitItem = new MenuItem("Exit");
@@ -250,6 +280,7 @@ public class MyHTTPServer {
             popup.add(stopItem);
             popup.addSeparator();
             popup.add(startDataItem);
+            popup.add(stopDataItem);
             popup.addSeparator();
             popup.add(exitItem);
 

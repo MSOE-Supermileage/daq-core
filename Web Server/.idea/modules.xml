@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../AndroidRelay/AndroidRelay.iml" filepath="$PROJECT_DIR$/../AndroidRelay/AndroidRelay.iml" />
       <module fileurl="file://$PROJECT_DIR$/Web Server.iml" filepath="$PROJECT_DIR$/Web Server.iml" />
     </modules>
   </component>
