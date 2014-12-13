@@ -9,8 +9,13 @@
 			type:"post",
 			url:"http://localhost:8000/ajax",
 			data:"{"+"'name':'blake'"+"}",
-			success:function(d){alert(d);data=d;},
+			success:function(d){updatedata(d)},
 			datatype:"json"
 		})
+		function updatedata(d){
+			var el=document.createElement('p');
+			el.innerHTML=d;
+			$('html').append(el);
+		}
 	</script>
 </html> 

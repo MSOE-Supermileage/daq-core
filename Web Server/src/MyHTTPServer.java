@@ -5,18 +5,27 @@
 import com.sun.net.httpserver.*;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Scanner;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 
 public class MyHTTPServer {
     //our base server
     static HttpServer server = null;
+
+    //log
+    static String log="";
 
     //for proper transferring of embedded files/styles/scripts
     static FileNameMap fileNameMap = URLConnection.getFileNameMap();
@@ -27,16 +36,18 @@ public class MyHTTPServer {
         startServer(8000);
     }
 
-    //function to start the server
+    /**
+     * Starts the server
+     * @param port Server Port
+     */
     public static void startServer(int port) {
         //create the server
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
         } catch (Exception e) {
-            System.out.println(e.toString());
+            log(e.toString());
             return;
         }
-
         //establish what handlers do what:
         //  -- "/" is the generic case for web page delivery
         //  -- "/ajax" is the case for AJAX data requests
@@ -48,8 +59,19 @@ public class MyHTTPServer {
 
         //start the server
         server.start();
+        log("home dir: " + System.getProperty("user.dir"));
     }
 
+    /**
+     * Logs the console output and prints it
+     * @param s string to be logged
+     */
+    public static void log(String s){
+        System.out.println(s);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        log+=(dateFormat.format(date))+": "+s+"\n"; //2014/08/06 15:59:48
+    }
     //Handler for http page requests
     static class RequestHandler implements HttpHandler {
         public void handle(HttpExchange e) throws IOException {
@@ -67,10 +89,10 @@ public class MyHTTPServer {
             if (mimeType == null) {
                 mimeType = "application/octet-stream";
             }
-            System.out.println(mimeType);
+            log(mimeType);
 
             //for clarity
-            System.out.println(path);
+            log(path);
 
             //create output stream
             OutputStream out = e.getResponseBody();
@@ -92,23 +114,77 @@ public class MyHTTPServer {
             out.close();
         }
     }
+    static boolean dataThreadIsRunning=false;
+    static ArrayList<String> datacollection=null;
+    static Thread datathread=null;
+    static Socket mysock=null;
+    public static void stopDataCollection(){
+        try {
+            dataThreadIsRunning=false;
+            mysock.close();
+            datacollection=null;
+            mysock=null;
+            datathread=null;
+        }catch(Exception e){
+            log(e.toString());
+        }
+
+    }
+    public static void startDataCollection(String address, int port){
+        try {
+            log("Connecting to phone at " + address + ":" + port);
+            mysock = new Socket(address, port);
+            datacollection=new ArrayList<String>();
+            dataThreadIsRunning=true;
+            datathread=new Thread(new Runnable(){
+                BufferedReader reader = new BufferedReader(new InputStreamReader(mysock.getInputStream()));
+
+                public void run(){
+                    while(dataThreadIsRunning) {
+                        try {
+                            String data=reader.readLine();
+                            log("received-data: " + data);
+                            datacollection.add(data);
+                            if (data.contains("Exception")||data.contains("null"))
+                                dataThreadIsRunning=false;
+                        }catch(Exception e){
+                            dataThreadIsRunning=false;
+                            log(e.toString());
+                        }
+                    }
+                    log("Phone disconnected");
+                }
+            });
+            datathread.start();
+        }catch(Exception e){
+            log(e.toString());
+        }
+    }
 
     //gets the data from the phone and returns it
-    public static String getData(String address, int port) {
+    public static String getData() {
         try {
-            //establish a socket connection to the phone
-            Socket sock = new Socket(address, port);
+            if(datacollection!=null) {
 
-            //read the data the phone sends upon connecting
-            BufferedReader reader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-
-            //close socket
-            sock.close();
-
-            //return the data
-            return reader.readLine();
+                //return the data
+                return datacollection.get(datacollection.size() - 1);
+            }
         } catch (Exception e) {
+            log(e.toString());
+        }
+        return null;
+    }
 
+    //gets all of the data from the phone and returns it
+    public static String getAllData() {
+        try {
+            if(datacollection!=null) {
+
+                //return the data
+                return String.join("<br>", Arrays.copyOf(datacollection.toArray(), datacollection.toArray().length, String[].class));
+            }
+        } catch (Exception e) {
+            log(e.toString());
         }
         return null;
     }
@@ -132,16 +208,18 @@ public class MyHTTPServer {
                 request += line;
             }
             //done reading
-
             //for clarity
-            System.out.println(request);
-            System.out.println("done reading");
+            log(request);
+            log("done reading");
 
             //establish the response stream
             OutputStream out = e.getResponseBody();
-            //dummy response for now
-            String response = "testing 123 testing 123...";
-
+            String response="";
+            if(request.contains("requesttype=last"))
+                response = getData();//"testing 123 testing 123...";
+            else if(request.contains("requesttype=all"))
+                response=getAllData();
+            log(response);
             //let the browser know there's something coming down the pipe
             e.sendResponseHeaders(200, response.length());
 
@@ -154,13 +232,43 @@ public class MyHTTPServer {
         }
     }
 
+    /**
+     * Shows a JOptionPane Message Box
+     * @param title Title of Message Box
+     * @param message Message of Message Box
+     */
+    public static void showLogBox(String title, final String message){
+        JFrame frame=new JFrame();
+        final JTextPane text=new JTextPane();
+        text.setText(message);
+        frame.setTitle(title);
+        JScrollPane scroll=new JScrollPane(text);
+        scroll.setVerticalScrollBarPolicy(
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scroll.setMinimumSize(new Dimension(400, 100));
+        JButton refresh=new JButton("Refresh");
+        refresh.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                text.setText(log);
+            }
+        });
+
+        frame.setLayout(new BorderLayout());
+        frame.getContentPane().add(refresh,BorderLayout.PAGE_START);
+        frame.getContentPane().add(scroll,BorderLayout.CENTER);
+        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
+        //JOptionPane.showMessageDialog(null,message,title,JOptionPane.INFORMATION_MESSAGE);
+    }
     static class MyTray {
         static TrayIcon trayIcon = null;
 
         public static void startNewTray() {
             //Check the SystemTray is supported
             if (!SystemTray.isSupported()) {
-                System.out.println("SystemTray is not supported");
+                log("SystemTray is not supported");
                 return;
             }
 
@@ -174,17 +282,23 @@ public class MyHTTPServer {
                 bimg = ImageIO.read(url);
 
             } catch (Exception e) {
-                System.out.println(e.toString());
+                log(e.toString());
                 return;
+            }
+            //create the system tray controller
+            final SystemTray tray = SystemTray.getSystemTray();
+
+            //stop the old tray Icon
+            if(trayIcon!=null){
+                tray.remove(trayIcon);
+                trayIcon=null;
             }
 
             //create the tray icon application
             trayIcon = new TrayIcon(bimg);
-            trayIcon.setToolTip("PitView v1.0");
+            trayIcon.setToolTip("PitView v1.1");
             trayIcon.setImageAutoSize(true);
 
-            //create the system tray controller
-            final SystemTray tray = SystemTray.getSystemTray();
 
             // Create pop-up menu components
             MenuItem nameItem = new MenuItem("PitView v1.0");
@@ -192,7 +306,7 @@ public class MyHTTPServer {
             startItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("Starting Server...");
+                    log("Starting Server...");
                     startServer(8000);
                 }
             });
@@ -200,16 +314,39 @@ public class MyHTTPServer {
             stopItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("Stopping Server...");
+                    log("Stopping Server...");
                     server.stop(0);
                     server = null;
+                }
+            });
+            final MenuItem logsItem = new MenuItem("Show Logs");
+            logsItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    showLogBox("Console Logs", log);
+                }
+            });
+            MenuItem startDataItem = new MenuItem("Connect to phone");
+            startDataItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    log("Starting Data Server...");
+                    startDataCollection(JOptionPane.showInputDialog("Please enter IP: "),1112);
+                }
+            });
+            MenuItem stopDataItem = new MenuItem("Disconnect from phone");
+            stopDataItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    log("Stopping Data Server...");
+                    stopDataCollection();
                 }
             });
             MenuItem exitItem = new MenuItem("Exit");
             exitItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("Exiting Server...");
+                    log("Exiting Server...");
                     server.stop(0);
                     tray.remove(trayIcon);
                     System.exit(0);
@@ -220,6 +357,12 @@ public class MyHTTPServer {
             popup.addSeparator();
             popup.add(startItem);
             popup.add(stopItem);
+            popup.addSeparator();
+            popup.add(logsItem);
+            popup.addSeparator();
+            popup.add(startDataItem);
+            popup.add(stopDataItem);
+            popup.addSeparator();
             popup.add(exitItem);
 
             trayIcon.setPopupMenu(popup);
@@ -228,7 +371,7 @@ public class MyHTTPServer {
                 //add icon to tray
                 tray.add(trayIcon);
             } catch (AWTException e) {
-                System.out.println("TrayIcon could not be added.");
+                log("TrayIcon could not be added.");
             }
         }
     }
