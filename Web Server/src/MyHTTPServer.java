@@ -25,7 +25,9 @@ public class MyHTTPServer {
     static HttpServer server = null;
 
     //log
-    static String log="";
+    static String log = "";
+
+    public static String version="1.2";
 
     //for proper transferring of embedded files/styles/scripts
     static FileNameMap fileNameMap = URLConnection.getFileNameMap();
@@ -38,6 +40,7 @@ public class MyHTTPServer {
 
     /**
      * Starts the server
+     *
      * @param port Server Port
      */
     public static void startServer(int port) {
@@ -64,14 +67,16 @@ public class MyHTTPServer {
 
     /**
      * Logs the console output and prints it
+     *
      * @param s string to be logged
      */
-    public static void log(String s){
+    public static void log(String s) {
         System.out.println(s);
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
-        log+=(dateFormat.format(date))+": "+s+"\n"; //2014/08/06 15:59:48
+        log += (dateFormat.format(date)) + ": " + s + "\n"; //2014/08/06 15:59:48
     }
+
     //Handler for http page requests
     static class RequestHandler implements HttpHandler {
         public void handle(HttpExchange e) throws IOException {
@@ -114,41 +119,44 @@ public class MyHTTPServer {
             out.close();
         }
     }
-    static boolean dataThreadIsRunning=false;
-    static ArrayList<String> datacollection=null;
-    static Thread datathread=null;
-    static Socket mysock=null;
-    public static void stopDataCollection(){
+
+    static boolean dataThreadIsRunning = false;
+    static ArrayList<String> datacollection = null;
+    static Thread datathread = null;
+    static Socket mysock = null;
+
+    public static void stopDataCollection() {
         try {
-            dataThreadIsRunning=false;
+            dataThreadIsRunning = false;
             mysock.close();
-            datacollection=null;
-            mysock=null;
-            datathread=null;
-        }catch(Exception e){
+            datacollection = null;
+            mysock = null;
+            datathread = null;
+        } catch (Exception e) {
             log(e.toString());
         }
 
     }
-    public static void startDataCollection(String address, int port){
+
+    public static void startDataCollection(String address, int port) {
         try {
             log("Connecting to phone at " + address + ":" + port);
             mysock = new Socket(address, port);
-            datacollection=new ArrayList<String>();
-            dataThreadIsRunning=true;
-            datathread=new Thread(new Runnable(){
+            datacollection = new ArrayList<String>();
+            dataThreadIsRunning = true;
+            datathread = new Thread(new Runnable() {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(mysock.getInputStream()));
 
-                public void run(){
-                    while(dataThreadIsRunning) {
+                public void run() {
+                    while (dataThreadIsRunning) {
                         try {
-                            String data=reader.readLine();
+                            String data = reader.readLine();
                             log("received-data: " + data);
                             datacollection.add(data);
-                            if (data.contains("Exception")||data.contains("null"))
-                                dataThreadIsRunning=false;
-                        }catch(Exception e){
-                            dataThreadIsRunning=false;
+                            if (data.contains("Exception") || data.contains("null"))
+                                dataThreadIsRunning = false;
+                        } catch (Exception e) {
+                            dataThreadIsRunning = false;
                             log(e.toString());
                         }
                     }
@@ -156,7 +164,7 @@ public class MyHTTPServer {
                 }
             });
             datathread.start();
-        }catch(Exception e){
+        } catch (Exception e) {
             log(e.toString());
         }
     }
@@ -164,7 +172,7 @@ public class MyHTTPServer {
     //gets the data from the phone and returns it
     public static String getData() {
         try {
-            if(datacollection!=null) {
+            if (datacollection != null) {
 
                 //return the data
                 return datacollection.get(datacollection.size() - 1);
@@ -178,7 +186,7 @@ public class MyHTTPServer {
     //gets all of the data from the phone and returns it
     public static String getAllData() {
         try {
-            if(datacollection!=null) {
+            if (datacollection != null) {
 
                 //return the data
                 return String.join("<br>", Arrays.copyOf(datacollection.toArray(), datacollection.toArray().length, String[].class));
@@ -214,11 +222,11 @@ public class MyHTTPServer {
 
             //establish the response stream
             OutputStream out = e.getResponseBody();
-            String response="";
-            if(request.contains("requesttype=last"))
+            String response = "";
+            if (request.contains("requesttype=last"))
                 response = getData();//"testing 123 testing 123...";
-            else if(request.contains("requesttype=all"))
-                response=getAllData();
+            else if (request.contains("requesttype=all"))
+                response = getAllData();
             log(response);
             //let the browser know there's something coming down the pipe
             e.sendResponseHeaders(200, response.length());
@@ -234,19 +242,20 @@ public class MyHTTPServer {
 
     /**
      * Shows a JOptionPane Message Box
-     * @param title Title of Message Box
+     *
+     * @param title   Title of Message Box
      * @param message Message of Message Box
      */
-    public static void showLogBox(String title, final String message){
-        JFrame frame=new JFrame();
-        final JTextPane text=new JTextPane();
+    public static void showLogBox(String title, final String message) {
+        JFrame frame = new JFrame();
+        final JTextPane text = new JTextPane();
         text.setText(message);
         frame.setTitle(title);
-        JScrollPane scroll=new JScrollPane(text);
+        JScrollPane scroll = new JScrollPane(text);
         scroll.setVerticalScrollBarPolicy(
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scroll.setMinimumSize(new Dimension(400, 100));
-        JButton refresh=new JButton("Refresh");
+        JButton refresh = new JButton("Refresh");
         refresh.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -255,13 +264,14 @@ public class MyHTTPServer {
         });
 
         frame.setLayout(new BorderLayout());
-        frame.getContentPane().add(refresh,BorderLayout.PAGE_START);
-        frame.getContentPane().add(scroll,BorderLayout.CENTER);
+        frame.getContentPane().add(refresh, BorderLayout.PAGE_START);
+        frame.getContentPane().add(scroll, BorderLayout.CENTER);
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
         //JOptionPane.showMessageDialog(null,message,title,JOptionPane.INFORMATION_MESSAGE);
     }
+
     static class MyTray {
         static TrayIcon trayIcon = null;
 
@@ -289,19 +299,19 @@ public class MyHTTPServer {
             final SystemTray tray = SystemTray.getSystemTray();
 
             //stop the old tray Icon
-            if(trayIcon!=null){
+            if (trayIcon != null) {
                 tray.remove(trayIcon);
-                trayIcon=null;
+                trayIcon = null;
             }
 
             //create the tray icon application
             trayIcon = new TrayIcon(bimg);
-            trayIcon.setToolTip("PitView v1.1");
+            trayIcon.setToolTip("PitView v"+version);
             trayIcon.setImageAutoSize(true);
 
 
             // Create pop-up menu components
-            MenuItem nameItem = new MenuItem("PitView v1.0");
+            MenuItem nameItem = new MenuItem("PitView v"+version);
             MenuItem startItem = new MenuItem("Start");
             startItem.addActionListener(new ActionListener() {
                 @Override
@@ -331,7 +341,7 @@ public class MyHTTPServer {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     log("Starting Data Server...");
-                    startDataCollection(JOptionPane.showInputDialog("Please enter IP: "),1112);
+                    startDataCollection(JOptionPane.showInputDialog("Please enter IP: "), 1112);
                 }
             });
             MenuItem stopDataItem = new MenuItem("Disconnect from phone");
