@@ -24,6 +24,7 @@ public class MyHTTPServer {
     //our base server
     static HttpServer server = null;
 
+    PhoneConnectionAgent phoneAgent;
     //log
     static String log = "";
 
@@ -32,18 +33,22 @@ public class MyHTTPServer {
     //for proper transferring of embedded files/styles/scripts
     static FileNameMap fileNameMap = URLConnection.getFileNameMap();
 
-    //main thread
-    public static void main(String[] args) {
+    public MyHTTPServer(){
+        phoneAgent=new PhoneConnectionAgent(this);
+    }
+
+    /*//main thread
+    public void main(String[] args) {
         //start the server
         startServer(8000);
-    }
+    }*/
 
     /**
      * Starts the server
      *
      * @param port Server Port
      */
-    public static void startServer(int port) {
+    public void startServer(int port) {
         //create the server
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
@@ -56,7 +61,7 @@ public class MyHTTPServer {
         //  -- "/ajax" is the case for AJAX data requests
         server.createContext("/", new RequestHandler());
         server.createContext("/ajax", new AjaxRequestHandler());
-        MyTray.startNewTray();
+        new MyTray().startNewTray();
         //I have no idea what this does
         server.setExecutor(null);
 
@@ -120,13 +125,13 @@ public class MyHTTPServer {
         }
     }
 
-    static boolean dataThreadIsRunning = false;
+    /*static boolean dataThreadIsRunning = false;
     static ArrayList<String> datacollection = null;
     static Thread datathread = null;
-    static Socket mysock = null;
+    static Socket mysock = null;*/
 
-    public static void stopDataCollection() {
-        try {
+    public void stopDataCollection() {
+        /*try {
             dataThreadIsRunning = false;
             mysock.close();
             datacollection = null;
@@ -134,12 +139,12 @@ public class MyHTTPServer {
             datathread = null;
         } catch (Exception e) {
             log(e.toString());
-        }
-
+        }*/
+        phoneAgent.stop();
     }
 
-    public static void startDataCollection(String address, int port) {
-        try {
+    public void startDataCollection(String address, int port) {
+        /*try {
             log("Connecting to phone at " + address + ":" + port);
             mysock = new Socket(address, port);
             datacollection = new ArrayList<String>();
@@ -166,16 +171,17 @@ public class MyHTTPServer {
             datathread.start();
         } catch (Exception e) {
             log(e.toString());
-        }
+        }*/
+        phoneAgent.start(address,port);
     }
 
     //gets the data from the phone and returns it
-    public static String getData() {
+    public String getData() {
         try {
-            if (datacollection != null) {
+            if (phoneAgent.getData() != null) {
 
                 //return the data
-                return datacollection.get(datacollection.size() - 1);
+                return phoneAgent.getData().get(phoneAgent.getData().size() - 1);
             }
         } catch (Exception e) {
             log(e.toString());
@@ -184,12 +190,12 @@ public class MyHTTPServer {
     }
 
     //gets all of the data from the phone and returns it
-    public static String getAllData() {
+    public String getAllData() {
         try {
-            if (datacollection != null) {
+            if (phoneAgent.getData() != null) {
 
                 //return the data
-                return String.join("<br>", Arrays.copyOf(datacollection.toArray(), datacollection.toArray().length, String[].class));
+                return String.join("<br>", Arrays.copyOf(phoneAgent.getData().toArray(), phoneAgent.getData().toArray().length, String[].class));
             }
         } catch (Exception e) {
             log(e.toString());
@@ -204,7 +210,7 @@ public class MyHTTPServer {
     }
 
     //deals with AJAX server requests (how the web page is sent the data)
-    static class AjaxRequestHandler implements HttpHandler {
+    class AjaxRequestHandler implements HttpHandler {
         public void handle(HttpExchange e) throws IOException {
             //establish the input data stream
             InputStream in = e.getRequestBody();
@@ -272,10 +278,10 @@ public class MyHTTPServer {
         //JOptionPane.showMessageDialog(null,message,title,JOptionPane.INFORMATION_MESSAGE);
     }
 
-    static class MyTray {
-        static TrayIcon trayIcon = null;
+    class MyTray {
+        TrayIcon trayIcon = null;
 
-        public static void startNewTray() {
+        public void startNewTray() {
             //Check the SystemTray is supported
             if (!SystemTray.isSupported()) {
                 log("SystemTray is not supported");
