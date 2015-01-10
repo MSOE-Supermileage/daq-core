@@ -24,23 +24,31 @@ public class MyHTTPServer {
     //our base server
     static HttpServer server = null;
 
+    PhoneConnectionAgent phoneAgent;
     //log
-    static String log="";
+    static String log = "";
+
+    public static String version="1.2";
 
     //for proper transferring of embedded files/styles/scripts
     static FileNameMap fileNameMap = URLConnection.getFileNameMap();
 
-    //main thread
-    public static void main(String[] args) {
+    public MyHTTPServer(){
+        phoneAgent=new PhoneConnectionAgent(this);
+    }
+
+    /*//main thread
+    public void main(String[] args) {
         //start the server
         startServer(8000);
-    }
+    }*/
 
     /**
      * Starts the server
+     *
      * @param port Server Port
      */
-    public static void startServer(int port) {
+    public void startServer(int port) {
         //create the server
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
@@ -53,7 +61,7 @@ public class MyHTTPServer {
         //  -- "/ajax" is the case for AJAX data requests
         server.createContext("/", new RequestHandler());
         server.createContext("/ajax", new AjaxRequestHandler());
-        MyTray.startNewTray();
+        new MyTray().startNewTray();
         //I have no idea what this does
         server.setExecutor(null);
 
@@ -64,14 +72,16 @@ public class MyHTTPServer {
 
     /**
      * Logs the console output and prints it
+     *
      * @param s string to be logged
      */
-    public static void log(String s){
+    public static void log(String s) {
         System.out.println(s);
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
-        log+=(dateFormat.format(date))+": "+s+"\n"; //2014/08/06 15:59:48
+        log += (dateFormat.format(date)) + ": " + s + "\n"; //2014/08/06 15:59:48
     }
+
     //Handler for http page requests
     static class RequestHandler implements HttpHandler {
         public void handle(HttpExchange e) throws IOException {
@@ -114,41 +124,44 @@ public class MyHTTPServer {
             out.close();
         }
     }
-    static boolean dataThreadIsRunning=false;
-    static ArrayList<String> datacollection=null;
-    static Thread datathread=null;
-    static Socket mysock=null;
-    public static void stopDataCollection(){
-        try {
-            dataThreadIsRunning=false;
-            mysock.close();
-            datacollection=null;
-            mysock=null;
-            datathread=null;
-        }catch(Exception e){
-            log(e.toString());
-        }
 
+    /*static boolean dataThreadIsRunning = false;
+    static ArrayList<String> datacollection = null;
+    static Thread datathread = null;
+    static Socket mysock = null;*/
+
+    public void stopDataCollection() {
+        /*try {
+            dataThreadIsRunning = false;
+            mysock.close();
+            datacollection = null;
+            mysock = null;
+            datathread = null;
+        } catch (Exception e) {
+            log(e.toString());
+        }*/
+        phoneAgent.stop();
     }
-    public static void startDataCollection(String address, int port){
-        try {
+
+    public void startDataCollection(String address, int port) {
+        /*try {
             log("Connecting to phone at " + address + ":" + port);
             mysock = new Socket(address, port);
-            datacollection=new ArrayList<String>();
-            dataThreadIsRunning=true;
-            datathread=new Thread(new Runnable(){
+            datacollection = new ArrayList<String>();
+            dataThreadIsRunning = true;
+            datathread = new Thread(new Runnable() {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(mysock.getInputStream()));
 
-                public void run(){
-                    while(dataThreadIsRunning) {
+                public void run() {
+                    while (dataThreadIsRunning) {
                         try {
-                            String data=reader.readLine();
+                            String data = reader.readLine();
                             log("received-data: " + data);
                             datacollection.add(data);
-                            if (data.contains("Exception")||data.contains("null"))
-                                dataThreadIsRunning=false;
-                        }catch(Exception e){
-                            dataThreadIsRunning=false;
+                            if (data.contains("Exception") || data.contains("null"))
+                                dataThreadIsRunning = false;
+                        } catch (Exception e) {
+                            dataThreadIsRunning = false;
                             log(e.toString());
                         }
                     }
@@ -156,18 +169,19 @@ public class MyHTTPServer {
                 }
             });
             datathread.start();
-        }catch(Exception e){
+        } catch (Exception e) {
             log(e.toString());
-        }
+        }*/
+        phoneAgent.start(address,port);
     }
 
     //gets the data from the phone and returns it
-    public static String getData() {
+    public String getData() {
         try {
-            if(datacollection!=null) {
+            if (phoneAgent.getData() != null) {
 
                 //return the data
-                return datacollection.get(datacollection.size() - 1);
+                return phoneAgent.getData().get(phoneAgent.getData().size() - 1);
             }
         } catch (Exception e) {
             log(e.toString());
@@ -176,12 +190,12 @@ public class MyHTTPServer {
     }
 
     //gets all of the data from the phone and returns it
-    public static String getAllData() {
+    public String getAllData() {
         try {
-            if(datacollection!=null) {
+            if (phoneAgent.getData() != null) {
 
                 //return the data
-                return String.join("<br>", Arrays.copyOf(datacollection.toArray(), datacollection.toArray().length, String[].class));
+                return String.join("<br>", Arrays.copyOf(phoneAgent.getData().toArray(), phoneAgent.getData().toArray().length, String[].class));
             }
         } catch (Exception e) {
             log(e.toString());
@@ -196,7 +210,7 @@ public class MyHTTPServer {
     }
 
     //deals with AJAX server requests (how the web page is sent the data)
-    static class AjaxRequestHandler implements HttpHandler {
+    class AjaxRequestHandler implements HttpHandler {
         public void handle(HttpExchange e) throws IOException {
             //establish the input data stream
             InputStream in = e.getRequestBody();
@@ -214,11 +228,11 @@ public class MyHTTPServer {
 
             //establish the response stream
             OutputStream out = e.getResponseBody();
-            String response="";
-            if(request.contains("requesttype=last"))
+            String response = "";
+            if (request.contains("requesttype=last"))
                 response = getData();//"testing 123 testing 123...";
-            else if(request.contains("requesttype=all"))
-                response=getAllData();
+            else if (request.contains("requesttype=all"))
+                response = getAllData();
             log(response);
             //let the browser know there's something coming down the pipe
             e.sendResponseHeaders(200, response.length());
@@ -234,19 +248,20 @@ public class MyHTTPServer {
 
     /**
      * Shows a JOptionPane Message Box
-     * @param title Title of Message Box
+     *
+     * @param title   Title of Message Box
      * @param message Message of Message Box
      */
-    public static void showLogBox(String title, final String message){
-        JFrame frame=new JFrame();
-        final JTextPane text=new JTextPane();
+    public static void showLogBox(String title, final String message) {
+        JFrame frame = new JFrame();
+        final JTextPane text = new JTextPane();
         text.setText(message);
         frame.setTitle(title);
-        JScrollPane scroll=new JScrollPane(text);
+        JScrollPane scroll = new JScrollPane(text);
         scroll.setVerticalScrollBarPolicy(
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scroll.setMinimumSize(new Dimension(400, 100));
-        JButton refresh=new JButton("Refresh");
+        JButton refresh = new JButton("Refresh");
         refresh.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -255,17 +270,18 @@ public class MyHTTPServer {
         });
 
         frame.setLayout(new BorderLayout());
-        frame.getContentPane().add(refresh,BorderLayout.PAGE_START);
-        frame.getContentPane().add(scroll,BorderLayout.CENTER);
+        frame.getContentPane().add(refresh, BorderLayout.PAGE_START);
+        frame.getContentPane().add(scroll, BorderLayout.CENTER);
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
         //JOptionPane.showMessageDialog(null,message,title,JOptionPane.INFORMATION_MESSAGE);
     }
-    static class MyTray {
-        static TrayIcon trayIcon = null;
 
-        public static void startNewTray() {
+    class MyTray {
+        TrayIcon trayIcon = null;
+
+        public void startNewTray() {
             //Check the SystemTray is supported
             if (!SystemTray.isSupported()) {
                 log("SystemTray is not supported");
@@ -289,19 +305,19 @@ public class MyHTTPServer {
             final SystemTray tray = SystemTray.getSystemTray();
 
             //stop the old tray Icon
-            if(trayIcon!=null){
+            if (trayIcon != null) {
                 tray.remove(trayIcon);
-                trayIcon=null;
+                trayIcon = null;
             }
 
             //create the tray icon application
             trayIcon = new TrayIcon(bimg);
-            trayIcon.setToolTip("PitView v1.1");
+            trayIcon.setToolTip("PitView v"+version);
             trayIcon.setImageAutoSize(true);
 
 
             // Create pop-up menu components
-            MenuItem nameItem = new MenuItem("PitView v1.0");
+            MenuItem nameItem = new MenuItem("PitView v"+version);
             MenuItem startItem = new MenuItem("Start");
             startItem.addActionListener(new ActionListener() {
                 @Override
@@ -331,7 +347,7 @@ public class MyHTTPServer {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     log("Starting Data Server...");
-                    startDataCollection(JOptionPane.showInputDialog("Please enter IP: "),1112);
+                    startDataCollection(JOptionPane.showInputDialog("Please enter IP: "), 1112);
                 }
             });
             MenuItem stopDataItem = new MenuItem("Disconnect from phone");

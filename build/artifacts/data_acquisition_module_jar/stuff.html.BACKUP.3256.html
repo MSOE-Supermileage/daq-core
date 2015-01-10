@@ -1,0 +1,78 @@
+<html>
+	<link rel="stylesheet" href="css.css"/>
+	<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+	<label><b>Hello</b> there<br>man</label>
+	<img src='facebook.png'></img>
+	<div>
+		<canvas class='dial' width='350' height='350' value="0.5"></canvas>
+	</div>
+	<script>
+		setTimeout(function(){
+			updateDial($('.dial')[0].getContext('2d'),$('.dial')[0].width/2,$('.dial')[0].height/2,$('.dial')[0].width/4,Math.random(),Math.PI,0,"red");
+		},750);
+	var data;
+		$.ajax({
+			type:"post",
+			url:"http://localhost:8000/ajax",
+			data:"{"+"'name':'blake'"+"}",
+			success:function(d){updatedata(d)},
+			datatype:"json"
+		})
+		function updatedata(d){
+			var el=document.createElement('p');
+			el.innerHTML=d;
+			$('html').appendChild(el);
+		}
+	var el=$('.dial')[0];
+	var dial=el.getContext('2d');
+	dial_draw_bg(dial, "Testing",{x:$('.dial')[0].width/2,y:$('.dial')[0].height/2});
+	function dial_draw_bg(canvas,title,center){
+		canvas.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
+		dial.strokeStyle='gray';
+		dial_inc_lines(dial,center.x,center.y,center.x/2,16,Math.PI,0,true);
+		dial.arc(center.x,center.y,center.x/2,Math.PI,0);
+		dial.lineWidth='1';
+		dial.fillStyle='lightgray';
+		dial.fill();
+		dial.stroke();
+		
+		dial.fillStyle="black";
+		dial.font="16px Arial";
+		dial.fillText(title,center.x-title.length*4,center.y+20);
+		
+		dial.strokeStyle='gray';
+		dial_inc_lines(dial,center.x,center.y,center.x/2,16,Math.PI,0,true);
+	}
+	function updateDial(canvas,x,y,r,value,start,end,color){
+		dial_draw_bg(canvas, "Testing",{x:x,y:y});
+		canvas.beginPath();
+		dial.lineWidth='1';
+		var sx=x+r*-.1*Math.cos(start+value*(start-end)),sy=y+r*-.1*Math.sin(start+value*(start-end));
+		canvas.moveTo(sx,sy);
+		var ex=x+r*.9*Math.cos(start+value*(start-end)),ey=y+r*.9*Math.sin(start+value*(start-end));
+		canvas.lineTo(ex,ey);
+		canvas.strokeStyle=color;
+		canvas.lineWidth='4';
+		canvas.stroke();
+		
+		//repeat
+		setTimeout(function(){
+			 updateDial(canvas,x,y,r,Math.random(),start,end,color);
+		},750);
+	}
+	function dial_inc_lines(canvas,x,y,r,n,start,end,sign){
+		dial.beginPath();
+		dial.lineWidth='1';
+		for(i=0;i<=n;i++){
+			var theta=start+(start-end)/n*i;
+			canvas.moveTo(x,y);
+			var rr=r;
+			if(sign&&(i==0||((i==n/2||i==n/4||i==n*3/4)&&n%2==0)||i==n))
+				rr=r*1.2;
+			var endx=rr*Math.cos(theta)+x,endy=rr*Math.sin(theta)+y;
+			canvas.lineTo(endx,endy);
+			canvas.stroke();
+		}
+	}
+	</script>
+</html> 
