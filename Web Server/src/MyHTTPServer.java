@@ -2,16 +2,21 @@
  * Created by stacksb on 11/1/2014.
  */
 
-import com.sun.net.httpserver.*;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+import javafx.stage.Screen;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeListener;
 import java.io.*;
-import java.net.*;
+import java.net.FileNameMap;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -28,13 +33,13 @@ public class MyHTTPServer {
     //log
     static String log = "";
 
-    public static String version="1.2";
+    public static String version = "1.2";
 
     //for proper transferring of embedded files/styles/scripts
     static FileNameMap fileNameMap = URLConnection.getFileNameMap();
 
-    public MyHTTPServer(){
-        phoneAgent=new PhoneConnectionAgent(this);
+    public MyHTTPServer() {
+        phoneAgent = new PhoneConnectionAgent(this);
     }
 
     /*//main thread
@@ -172,7 +177,7 @@ public class MyHTTPServer {
         } catch (Exception e) {
             log(e.toString());
         }*/
-        phoneAgent.start(address,port);
+        phoneAgent.start(address, port);
     }
 
     //gets the data from the phone and returns it
@@ -257,6 +262,7 @@ public class MyHTTPServer {
         final JTextPane text = new JTextPane();
         text.setText(message);
         frame.setTitle(title);
+        frame.setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
         JScrollPane scroll = new JScrollPane(text);
         scroll.setVerticalScrollBarPolicy(
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -276,6 +282,26 @@ public class MyHTTPServer {
         frame.pack();
         frame.setVisible(true);
         //JOptionPane.showMessageDialog(null,message,title,JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void restart() throws Exception {
+        final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+        final File currentJar = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+
+        /* is it a jar file? */
+        if (!currentJar.getName().endsWith(".jar"))
+            return;
+
+        /* Build command: java -jar application.jar */
+        final ArrayList<String> command = new ArrayList<String>();
+        command.add(javaBin);
+        command.add("-jar");
+        command.add(currentJar.getPath());
+
+        final ProcessBuilder builder = new ProcessBuilder(command);
+        builder.start();
+        System.exit(0);
+
     }
 
     class MyTray {
@@ -312,12 +338,12 @@ public class MyHTTPServer {
 
             //create the tray icon application
             trayIcon = new TrayIcon(bimg);
-            trayIcon.setToolTip("PitView v"+version);
+            trayIcon.setToolTip("PitView v" + version);
             trayIcon.setImageAutoSize(true);
 
 
             // Create pop-up menu components
-            MenuItem nameItem = new MenuItem("PitView v"+version);
+            MenuItem nameItem = new MenuItem("PitView v" + version);
             MenuItem startItem = new MenuItem("Start");
             startItem.addActionListener(new ActionListener() {
                 @Override
@@ -358,6 +384,20 @@ public class MyHTTPServer {
                     stopDataCollection();
                 }
             });
+            MenuItem restartItem = new MenuItem("Restart");
+            restartItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    log("Restarting Server...");
+                    server.stop(0);
+                    tray.remove(trayIcon);
+                    try {
+                        restart();
+                    }catch(Exception ex){
+                        log("Restart failed with stack: "+ex.getStackTrace());
+                    }
+                }
+            });
             MenuItem exitItem = new MenuItem("Exit");
             exitItem.addActionListener(new ActionListener() {
                 @Override
@@ -379,6 +419,7 @@ public class MyHTTPServer {
             popup.add(startDataItem);
             popup.add(stopDataItem);
             popup.addSeparator();
+            popup.add(restartItem);
             popup.add(exitItem);
 
             trayIcon.setPopupMenu(popup);
