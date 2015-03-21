@@ -1,14 +1,20 @@
 <?
 $op=$_POST['operation'];
 if($op=="pull"){
-	$file=fopen("databuffer.txt","r") or die("cant open file");
-	echo fread($file,filesize("databuffer.txt"));
-	fclose($file);
-	$file=fopen("databuffer.txt","w");
-	fclose($file);
+	if(file_exists("databuffer.txt")){
+		$file=fopen("databuffer.txt","r") or die("cant open file");
+		echo fread($file,filesize("databuffer.txt")+1) . "****";
+		fclose($file);
+		$file=fopen("databuffer.txt","w");
+		fclose($file);
+	}else{
+		echo "****";
+		$file=fopen("databuffer.txt","w");
+		fclose($file);
+	}
 }else if ($op=="push"){
 	$file=fopen("databuffer.txt","r") or die("cant open file");
-	$data= fread($file,filesize("databuffer.txt"));
+	$data= fread($file,filesize("databuffer.txt")+1);
 	fclose($file);
 	$newdata=$_POST['data'];
 	if(strlen($data)>0){
