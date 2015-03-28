@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,21 +63,27 @@ public class PhoneConnectionAgent {
         public void run() {
             while (isRunning) {
                 try {
-                    URL url = new URL("http://msoesmv.hostei.com/webRelay.php");
+                    //create the connection
+                    URL url = new URL("http://msoesmv.hostei.com/webRelay.php"); //must be the php script url
+                    //open the connection to the server
                     HttpURLConnection connection=(HttpURLConnection)url.openConnection();
                     connection.setRequestMethod("POST");
 
+                    //set parameters
                     String urlParams="operation=pull";
                     connection.setDoOutput(true);
                     DataOutputStream d=new DataOutputStream(connection.getOutputStream());
+                    //send the parameters to the web host
                     d.writeBytes(urlParams);
                     d.flush();
                     d.close();
-
-                    //reader= new BufferedReader(new InputStreamReader(mysock.getInputStream()));
+                    //read the response
                     reader= new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     String data;
-                    while(!(data= reader.readLine()).equals("****")) {
+                    //for each line while the line isn't "****"
+                    while(!(data= reader.readLine()).equals("****")) {//data contains the response line
+                        //do work
+                        data= URLDecoder.decode(data,"UTF-8").replace("\\","");
                         server.log("received-data: " + data);
                         datacollection.add(data);
                         if (data.contains("Exception") || data.contains("null"))

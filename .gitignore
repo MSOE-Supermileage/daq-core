@@ -43,7 +43,10 @@ workspace.xml
 ## Plugin-specific files:
 
 # IntelliJ
-out/
+#out/
+*.class
+*.apk
+*.jar
 # put any application/deployment binaries in the Downloads section of the BitBucket repo
 
 # mpeltonen/sbt-idea plugin

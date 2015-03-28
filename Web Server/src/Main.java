@@ -11,6 +11,6 @@ public class Main {
     static MyHTTPServer server;
     public static void main(String[] args) {
         server=new MyHTTPServer();
-        server.startServer(8000);
+        server.startServer(80);
     }
 }
