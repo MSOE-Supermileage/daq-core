@@ -54,6 +54,9 @@ public class MyHTTPServer {
      * @param port Server Port
      */
     public void startServer(int port) {
+        if(server!=null){
+            server.stop(0);
+        }
         //create the server
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
@@ -90,13 +93,16 @@ public class MyHTTPServer {
     //Handler for http page requests
     static class RequestHandler implements HttpHandler {
         public void handle(HttpExchange e) throws IOException {
-
+            log("testing");
             //get file from request path (after the slashes)
             String path = System.getProperty("user.dir") + e.getRequestURI().toString().replace("/", "\\");
 
             //if it doesn't exist, serve the 404 page
-            if (!(new File(path).exists() || new File(path).isDirectory())) {
+            if (!(new File(path).exists() )) {
                 path = System.getProperty("user.dir") + "\\oops404.html";
+            }
+            if(new File(path).isDirectory()){
+                path+="\\index.html";
             }
 
             // Get mime type from the ones defined in [jre_home]/lib/content-types.properties
