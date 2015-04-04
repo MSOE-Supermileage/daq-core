@@ -1,16 +1,13 @@
 package edu.msoe.smv.raspi;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import java.io.*;
 
 /**
- * TODO
+ * Logs {@link DataNode DataNodes} to a file.
  *
  * @author matt
  */
 public class DataLogger {
-
 	/**
 	 * The file to log to
 	 */
@@ -20,15 +17,28 @@ public class DataLogger {
 	 */
 	private PrintWriter writer;
 
-	public DataLogger(File file) throws FileNotFoundException {
+	/**
+	 * Constructs a new DataLogger that logs to <tt>file</tt>
+	 *
+	 * @param file the file to log to
+	 * @throws IOException if <tt>file</tt> could not be created
+	 * @throws FileWritableException if <tt>file</tt> is not writable
+	 */
+	public DataLogger(File file) throws IOException {
 		if (file == null) {
 			throw new IllegalArgumentException("file cannot be null");
-		} else if (!file.canWrite() || !file.setWritable(true)) {
+		}
+		if (!file.exists()) {
+			file.createNewFile();
+		}
+		if (!file.canWrite() || !file.setWritable(true)) {
 			throw new FileWritableException("log file could not be set writable");
 		}
 
 		this.logFile = file;
-		this.writer = new PrintWriter(this.logFile);
+		this.writer = new PrintWriter(new FileOutputStream(logFile, true));
+		// print header line to log file
+		this.writer.println("Milliseconds,RPM,MPH");
 	}
 
 	/**

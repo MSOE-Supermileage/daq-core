@@ -5,7 +5,6 @@ import edu.msoe.smv.VehicleAttributes;
 import edu.msoe.smv.raspi.sensors.RotationalSpeedSensor;
 
 import java.net.SocketException;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,45 +21,28 @@ public class Main {
 		// set VehicleAttributes vehicle
 		if (args.length > 0) {
 			setVehicle(args[0]);
+		} else {
+			System.out.println("You must specify which vehicle this is being run on.");
+			System.out.println("For example:");
+			System.out.println("\tsudo java -jar Raspberry_Pi.jar MP82");
+			System.exit(1);
 		}
-		System.out.println(vehicle);
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		System.out.println("Chosen vehicle: " + vehicle);
 
-		// Run things
-		final List<DataNode> nodeList = Collections.synchronizedList(new LinkedList<DataNode>());
+		final List<DataNode> nodeList = new LinkedList<>();
 		try {
+			// init server
 			Server server = Server.getInstance(nodeList);
-			System.out.println("Made server");
-
-			final RotationalSpeedSensor rotationalSpeedSensor = new RotationalSpeedSensor(7, PinState.HIGH, 1);
-			System.out.println("Made rot speed sensor");
-			Thread getDatas = new Thread(new Runnable() {
-				@Override
-				public void run() {
-					while (true) {
-						double foo = rotationalSpeedSensor.getValue();
-//						foo = Math.random();
-						System.out.println("got omega value");
-						nodeList.add(new DataNode(foo, vehicle.getTireDiam() * foo));
-						System.out.println("added data node");
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-				}
-			});
-			System.out.println("Made data thread");
-
 			Thread serverThread = new Thread(server);
 			server.enableServer(true);
-			getDatas.start();
-			System.out.println("Started data thread");
+			System.out.println("Made server");
+
+			// init rotational speed sensor
+			final RotationalSpeedSensor rotationalSpeedSensor = new RotationalSpeedSensor(7, PinState.HIGH, 1);
+			rotationalSpeedSensor.setNodeList(nodeList);
+			System.out.println("Made rotational speed sensor");
+
+			// start threads
 			serverThread.start();
 			System.out.println("Started server thread");
 		} catch (SocketException e) {
