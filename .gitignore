@@ -20,6 +20,7 @@ bin/
  **.idea/workspace.xml
  **.idea/tasks.xml
  **.idea/dictionaries
+workspace.xml
 
 # Sensitive or high-churn files:
 # .idea/dataSources.ids
@@ -42,7 +43,10 @@ bin/
 ## Plugin-specific files:
 
 # IntelliJ
-out/
+#out/
+*.class
+*.apk
+*.jar
 # put any application/deployment binaries in the Downloads section of the BitBucket repo
 
 # mpeltonen/sbt-idea plugin
