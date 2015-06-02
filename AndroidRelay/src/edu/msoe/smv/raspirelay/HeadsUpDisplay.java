@@ -13,16 +13,15 @@ package edu.msoe.smv.raspirelay;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.text.format.Formatter;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
+import android.view.*;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.gson.Gson;
@@ -30,24 +29,31 @@ import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 
 /**
  * the main activity
  */
 public class HeadsUpDisplay extends Activity {
+
+    private static final DecimalFormat speedFormatter = new DecimalFormat("0.0");
+
+
     private Stopwatch lapWatch, totalWatch;
-    public static LinkedList<Long> laptimes=new LinkedList<>();
+    public static LinkedList<Long> laptimes = new LinkedList<>();
     int laps = 0;
 
-    private final Gson gson = new Gson();
-
     // layout references
-    public TextView console;
+    private TextView console;
+    private TextView mphLabel;
+    private Button lapButton;
+
+    private static double currentSpeed = 99.0;
 
     /**
      * create the service connection when the framework builds this class
-     * <p/>
+     *
      * Generic service connection
      */
     private ServiceConnection connection;
@@ -75,44 +81,52 @@ public class HeadsUpDisplay extends Activity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (resultCode == 100) {
-                        Toast.makeText(getApplicationContext(), resultData.getString("message"), Toast.LENGTH_SHORT).show();
-                    } else if (resultCode == 200) {
-                        String data = resultData.getString("node");
+                    if (resultCode == VehicleConnectionService.MESSAGE_CODE) {
+                        Toast.makeText(getApplicationContext(),
+                                resultData.getString(VehicleConnectionService.MESSAGE),
+                                Toast.LENGTH_SHORT).show();
+
+                    } else if (resultCode == VehicleConnectionService.DATA_NODE_CODE) {
+                        String data = resultData.getString(VehicleConnectionService.DATA_NODE);
                         Log.i("DATA_NODE", data);
-                        edu.msoe.smv.raspi.DataNode node = gson.fromJson(data, edu.msoe.smv.raspi.DataNode.class);
-                        Toast.makeText(getApplicationContext(), Double.toString(node.getRpm()), Toast.LENGTH_SHORT).show();
-                    } else if (resultCode == 300) {
-                        String data = resultData.getString("count");
+                        try {
+                            currentSpeed = Double.parseDouble(data);
+                            mphLabel.setText(speedFormatter.format(currentSpeed));
+                        } catch (Exception e) {
+                            // we got some invalid data, return
+                            Log.e("DATA_NODE", "invalid speed format: " + data);
+                        }
+                    } else if (resultCode == VehicleConnectionService.PI_CONNECTED_CODE) {
+                        // parse state of whether or not pi is connected
+                        boolean connected = resultData.getBoolean(VehicleConnectionService.PI_CONNECTED);
+
+                        // draw it on the gui
+                        if (lapButton != null) {
+                            // green if connected, red if not
+                            lapButton.setBackgroundColor(connected ? 0xf700ff00 : 0xf7ff0000);
+                        }
                     }
                 }
             });
         }
-
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //Remove title bar
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        //Remove notification bar
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        // set the layout
         setContentView(R.layout.headsupdisplay);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         console = (TextView) findViewById(R.id.console);
+        mphLabel = (TextView) findViewById(R.id.mphLbl);
+        lapButton = (Button) findViewById(R.id.lapBtn);
 
-        // get public IP from Wifi Manager
-        WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
-        String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
-        updateConsole("my ip: " + ip);
-
-        // Create the vehicle connection service
-        Intent serviceBindingIntent = new Intent(getBaseContext(), VehicleConnectionService.class);
-        serviceBindingIntent.putExtra("receiver", resultReceiver);
-        startService(serviceBindingIntent);
-
-        /*
-         * bind the service to the activity - only for bound services. We want a started service that
-         * starts when the application starts and continues in the background, and allows multiple clients.
-         */
-//        bindService(serviceBindingIntent, connection, Context.BIND_AUTO_CREATE);
+        startVehicleConnectionService();
 
         lapWatch = new Stopwatch(new Runnable() {
             @Override
@@ -132,6 +146,7 @@ public class HeadsUpDisplay extends Activity {
             String line;
             while ((line = br.readLine()) != null) {
                 updateConsole(line);
+                Log.e("arp", line);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -139,11 +154,30 @@ public class HeadsUpDisplay extends Activity {
 
     }
 
+    private void startVehicleConnectionService() {
+        Log.d("debug", "starting vehicle service...");
+        // Create the vehicle connection service
+        Intent serviceBindingIntent = new Intent(getBaseContext(), VehicleConnectionService.class);
+        serviceBindingIntent.putExtra("receiver", resultReceiver);
+        startService(serviceBindingIntent);
+
+        /*
+         * bind the service to the activity - only for bound services. We want a started service that
+         * starts when the application starts and continues in the background, and allows multiple clients.
+         */
+//        bindService(serviceBindingIntent, connection, Context.BIND_AUTO_CREATE);
+
+        Log.d("debug", "service started");
+    }
+
     /**
      *
      */
     @Override
     public void onDestroy() {
+        // stop the vehicle connection service
+        Intent stopIntent = new Intent(getBaseContext(), VehicleConnectionService.class);
+        stopService(stopIntent);
         super.onDestroy();
     }
 
@@ -156,7 +190,6 @@ public class HeadsUpDisplay extends Activity {
         try {
             console.append(line + "\n");
         } catch (Exception e) {
-            System.out.println(console);
             console.append(e.toString());
         }
     }
@@ -165,6 +198,8 @@ public class HeadsUpDisplay extends Activity {
         if(!lapWatch.isRunning()) {
             lapWatch.start();
             totalWatch.start();
+            laps = 0;
+            ((TextView) findViewById(R.id.numLapsLbl)).setText("" + laps);
         }
     }
 
@@ -172,25 +207,20 @@ public class HeadsUpDisplay extends Activity {
         lapWatch.stop();
         totalWatch.stop();
         updateGUI();
-        laps=0;
+        laps = 0;
     }
 
-    public void pauseClick(View v) {
-        lapWatch.pause();
-        totalWatch.pause();
-        updateGUI();
-    }
+//    public void pauseClick(View v) {
+//        lapWatch.pause();
+//        totalWatch.pause();
+//        updateGUI();
+//    }
 
     private void updateGUI() {
         String lap = Stopwatch.toTimeString(lapWatch.getDuration()), total = Stopwatch.toTimeString(totalWatch.getDuration());
         ((TextView) findViewById(R.id.currLapTimeLbl)).setText(lap.substring(3, lap.length() - 2));
         ((TextView) findViewById(R.id.totalTimeLbl)).setText("Total: " + total.substring(0, total.length() - 2));
-        ((TextView) findViewById(R.id.numLapsLbl)).setText("" + laps);
-        ((TextView) findViewById(R.id.mphLbl)).setText(""+ getMPH());
-    }
-
-    private int getMPH() {
-        return 99;
+//        ((TextView) findViewById(R.id.numLapsLbl)).setText("" + laps);
     }
 
     public void lapClick(View v) {
