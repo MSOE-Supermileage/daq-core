@@ -8,12 +8,12 @@ Check out the [Task Board](https://waffle.io/MSOE-Supermileage/DAQ).
 
 ### Setup ###
 
-#### Tools/Kits ####
-	* [IntellJ IDEA](http://www.jetbrains.com/idea/)
-	* [Java Development Kit 7](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
-	* [Android SDK](https://developer.android.com/sdk/index.html)
-	* [Python2.7](https://docs.python.org/2/)
+#### Tools/Kits #### 
+* [IntellJ IDEA](http://www.jetbrains.com/idea/)
+* [Java Development Kit 7](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
+* [Android SDK](https://developer.android.com/sdk/index.html)
+* [Python2.7](https://docs.python.org/2/)
     
 #### Configuration ####
-	* SDK Version 22 or later for android 5.0.1
+* SDK Version 22 or later for android 5.0.1
 
