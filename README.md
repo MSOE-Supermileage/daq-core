@@ -1,26 +1,20 @@
 # README #
 
 
+### Overview ###
 
-### What is this repository for? ###
+This project is for the Milwaukee School of Engineering SuperMileage Team, a subset of SAE. The goal is to build a functional data acquisition system for Prototype Electric and Gas Vehicles for compete in the [Shell Eco-Marathon](http://www.shell.com/global/environment-society/ecomarathon/events/americas.html) and [SAE Supermileage](http://students.sae.org/cds/supermileage/) collegiate design and engineering competitions.
 
-* This is the main repository for the Data Acquisition Module. The repository contains projects for the android application, the raspberry pi application, and the web server.
-* If you would like to edit this page, first [learn markdown](https://bitbucket.org/tutorials/markdowndemo).
+The system consists of an android phone as a HUD (heads up display) USB Tethered to a [Raspberry PI](https://www.raspberrypi.org/) that collects data on various sensors connected to the GPIO.
 
-### How do I get set up? ###
+### Setup ###
 
-* Setup
-	* The projects are of [IntellJ](http://www.jetbrains.com/idea/) origin. You can use another IDE or text editor if you so choose, so long as you do not commit other non-intellij project files or temporary backup files. Feel free to add them to the .gitignore
-	* You will need JDK 7. Feel free to use Oracle JDK or OpenJDK. Android does not support Java 8 as of Oct 12, 2014.
-	* For the android project (Raspberry Pi Data Hub), you'll need the Android SDK. I don't know what packages you'll need yet, but Android SDK is definitely necessary. :-)
-
+* Tools/Kits
+	* [IntellJ master race (free ultimate edition for students))](http://www.jetbrains.com/idea/)
+	* [Java Development Kit 7](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
+	* [Android SDK](https://developer.android.com/sdk/index.html)
+    * [Python2.7](https://docs.python.org/2/)
+    
 * Configuration
-	* You shouldn't need to configure anything other than your JDK and Android SDK if necessary. You may need Putty or OpenSSH or something similar for interfacing with a raspberry pi to test the raspberry pi project.
-* Dependencies
-	* Will be in the repository.
-* Deployment instructions
-	* For the android project, you'll need to deploy through either ADB or package the application and send it as an APK. I've never done this, so there may be some kinds in this process I'm unaware of. For the other two - deploy as a packaged jar file.
+	* SDK Version 22 or later for android 5.0.1
 
-### Who do I talk to? ###
-
-* MSOE Super Mileage Vehicle Team
