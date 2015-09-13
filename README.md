@@ -16,5 +16,6 @@ Check out the [Task Board](https://waffle.io/MSOE-Supermileage/DAQ). [![Stories 
 * [Python2.7](https://docs.python.org/2/)
     
 #### Configuration ####
-* SDK Version 22 or later for android 5.0.1
-
+* SDK Version 21 or later for android 5.0.1
+* The android portion of the project is currently out of date. Deploy scripts are needed to be written to deploy to a clean install of raspbian, and code will need to be imported to github.
+* The Web Server Project is a windows application. The connection between the heads up display and the web server is not currenlty functional.
