@@ -5,7 +5,7 @@ This project is for the Milwaukee School of Engineering SuperMileage Team, a sub
 
 The system consists of an android phone as a HUD (heads up display) USB Tethered to a [Raspberry PI](https://www.raspberrypi.org/) that collects data on various sensors connected to the GPIO.
 
-Check out the [Task Board](https://waffle.io/MSOE-Supermileage/DAQ). [![Stories in Ready](https://badge.waffle.io/MSOE-Supermileage/DAQ.png?label=ready&title=Ready)](https://waffle.io/MSOE-Supermileage/DAQ)
+Check out the [Task Board](https://waffle.io/MSOE-Supermileage/DAQ).
 
 ### Setup ###
 
