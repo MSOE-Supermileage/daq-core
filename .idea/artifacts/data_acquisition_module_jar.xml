@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" build-on-make="true" name="data-acquisition-module:jar">
-    <output-path>$PROJECT_DIR$/build/artifacts/data_acquisition_module_jar</output-path>
-    <root id="archive" name="data-acquisition-module.jar">
-      <element id="module-output" name="data-acquisition-module" />
-    </root>
-  </artifact>
-</component>
