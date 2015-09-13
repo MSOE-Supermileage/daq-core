@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/MSOE-Supermileage/DAQ.png?label=ready&title=Ready)](https://waffle.io/MSOE-Supermileage/DAQ)
 ### Overview ###
 
 This project is for the Milwaukee School of Engineering SuperMileage Team, a subset of SAE. The goal is to build a functional data acquisition system for Prototype Electric and Gas Vehicles for compete in the [Shell Eco-Marathon](http://www.shell.com/global/environment-society/ecomarathon/events/americas.html) and [SAE Supermileage](http://students.sae.org/cds/supermileage/) collegiate design and engineering competitions.
