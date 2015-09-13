@@ -1,4 +1,4 @@
-package edu.msoe.smv.raspirelay;
+package edu.msoe.smv.androidhud;
 
 /**
  * Created by Blake on 5/2/2015.

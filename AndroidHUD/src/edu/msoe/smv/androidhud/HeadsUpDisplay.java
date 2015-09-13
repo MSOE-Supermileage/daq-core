@@ -3,7 +3,7 @@
  * Date: 10/25/14
  */
 
-package edu.msoe.smv.raspirelay;
+package edu.msoe.smv.androidhud;
 
 /**
  * @author austin

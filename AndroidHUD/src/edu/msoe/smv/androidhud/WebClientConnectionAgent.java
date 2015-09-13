@@ -4,7 +4,7 @@
  * Date: 12/7/14
  */
 
-package edu.msoe.smv.raspirelay;
+package edu.msoe.smv.androidhud;
 
 import android.os.AsyncTask;
 import android.util.Log;

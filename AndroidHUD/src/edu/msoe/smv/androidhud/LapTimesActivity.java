@@ -1,14 +1,12 @@
-package edu.msoe.smv.raspirelay;
+package edu.msoe.smv.androidhud;
 
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import java.net.DatagramPacket;
 import java.util.List;
 
 /**
