@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/MSOE-Supermileage/DAQ.png?label=ready&title=Ready)](https://waffle.io/MSOE-Supermileage/DAQ)
 
 ### Overview ###
 
