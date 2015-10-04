@@ -20,20 +20,26 @@ Here is the gist of the feature branch workflow. The master branch will always b
 #### Example
 
 1. Create a new feature to work on:
-  ```bash
-  $ git branch <branch-feature-name>        # Create a new branch
-  $ git checkout <branch-feature-name>      # Switch to the specified branch
-  # These two steps can be simplified to
-  $ git checkout -b <branch-feature-name>
-  ```
+
+   ```bash
+   $ git branch <branch-feature-name>           # Create a new branch
+   $ git checkout <branch-feature-name>         # Switch to the specified branch
+   # These two steps can be simplified to
+   $ git checkout -b <branch-feature-name>
+   ```
+    
 1. Do something, like commit:
+   
    ```bash
    $ git commit ./path/to/file/to/commit -m '<commit message>'
    ```
+   
 1. Push to the remote server, so that your changes are not lost forever and so other people can work on your code too:
+   
    ```bash
    $ git push -u origin <branch-feature-name>
    ```
+   
    You only need the `-u` the first time the branch is pushed; afterwards, you should be able to simply `git push`.
 
 #### Merging vs. Rebasing
